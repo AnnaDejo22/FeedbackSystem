@@ -46,7 +46,6 @@
     {
         try
         {
-            // POST to backend API
             var response = await Http.PostAsJsonAsync("api/feedback", feedback);
 
             if (response.IsSuccessStatusCode)
