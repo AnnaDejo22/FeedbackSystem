@@ -87,4 +87,24 @@ public class FeedbackController : ControllerBase
         else return NotFound("Feedback deletion failed.");
     }
 
+    [HttpGet("{status}")]
+    public async Task<IActionResult> SortFeedbacks(FeedBackStatus status)
+    {
+        var feedbacks = await _feedbackService.SortFeedbacksByStatusAsync(status);
+
+        if (!feedbacks.Any())
+        {
+            return NotFound(new
+            {
+                message = "No feedbacks found for the given status."
+            });
+        }
+
+        return Ok(new
+        {
+            message = "Feedbacks fetched successfully",
+            data = feedbacks
+        });
+    }
+
 }

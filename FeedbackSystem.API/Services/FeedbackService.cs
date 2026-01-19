@@ -3,6 +3,7 @@ using FeedbackSystem.API.Models;
 using FeedbackSystem.API.Services.Interfaces;
 using FeedbackSystem.Contracts.DTO;
 using FeedbackSystem.API.Enum;
+using Microsoft.AspNetCore.Mvc;
 
 namespace FeedbackSystem.API.Services;
 
@@ -84,5 +85,21 @@ public class FeedbackService : IFeedbackService
         await _context.SaveChangesAsync();
 
         return true;
+    }
+
+    public async Task<List<FeedbackDTO>> SortFeedbacksByStatusAsync(FeedBackStatus status)
+    {
+        var feedbacks = _context.Feedbacks.Where(fb => fb.Status == status).ToList();
+
+        var feedbackDtos = feedbacks.Select(feedback => new FeedbackDTO
+        {
+            Id = feedback.Id,
+            UserName = feedback.UserName,
+            FeedbackText = feedback.Feedbacks,
+            Rating = feedback.Rating,
+            Status = feedback.Status.ToString(),
+            SubmittedOn = feedback.SubmittedOn
+        }).ToList();
+        return feedbackDtos;
     }
 }

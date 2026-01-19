@@ -4,16 +4,30 @@
 
 <div class="feedback-list">
 
-    @if (feedbacks == null)
+    @if (filteredFeedbacks == null)
     {
         <p>Loading feedback...</p>
     }
-    else if (feedbacks.Count == 0)
+    else if (!filteredFeedbacks.Any())
     {
         <p>No feedback available.</p>
     }
     else
     {
+        <div class="mb-3">
+            <button class="btn btn-secondary me-2" @onclick="LoadAll">
+                All Feedbacks
+            </button>
+
+            <button class="btn btn-primary me-2" @onclick="LoadNew">
+                New Feedbacks
+            </button>
+
+            <button class="btn btn-success" @onclick="LoadReviewed">
+                Reviewed Feedbacks
+            </button>
+        </div>
+
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -24,8 +38,9 @@
                     <th>Actions</th>
                 </tr>
             </thead>
+
             <tbody>
-                @foreach (var fb in feedbacks)
+                @foreach (var fb in filteredFeedbacks)
                 {
                     <tr>
                         <td>@fb.UserName</td>
@@ -33,7 +48,9 @@
                         <td>@fb.Rating</td>
                         <td>@fb.Status</td>
                         <td>
-                            <button class="btn btn-primary btn-sm" @onclick="() => ShowModal(fb)">View</button>
+                            <button class="btn btn-primary btn-sm" @onclick="() => ShowModal(fb)">
+                                View
+                            </button>
                         </td>
                     </tr>
                 }
@@ -42,31 +59,48 @@
     }
 </div>
 
-
 @if (selectedFeedback != null)
 {
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal fade show d-block"
+         tabindex="-1"
+         style="background-color: rgba(0,0,0,0.5);">
+
         <div class="modal-dialog">
             <div class="modal-content">
+
                 <div class="modal-header">
                     <h5 class="modal-title">Feedback Details</h5>
-                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                    <button class="btn-close" @onclick="CloseModal"></button>
                 </div>
+
                 <div class="modal-body">
                     <p><strong>User Name:</strong> @selectedFeedback.UserName</p>
                     <p><strong>Feedback:</strong> @selectedFeedback.FeedbackText</p>
                     <p><strong>Rating:</strong> @selectedFeedback.Rating</p>
                     <p><strong>Status:</strong> @selectedFeedback.Status</p>
-                    <p><strong>Submitted On:</strong> @selectedFeedback.SubmittedOn.ToString("f")</p>
+                    <p>
+                        <strong>Submitted On:</strong>
+                        @selectedFeedback.SubmittedOn.ToString("f")
+                    </p>
                 </div>
+
                 <div class="modal-footer">
                     @if (selectedFeedback.Status == "New")
                     {
-                        <button class="btn btn-success" @onclick="UpdateStatus">Mark as Reviewed</button>
+                        <button class="btn btn-success" @onclick="UpdateStatus">
+                            Mark as Reviewed
+                        </button>
                     }
-                    <button class="btn btn-secondary" @onclick="CloseModal">Close</button>
-                    <button class="btn btn-secondary btn-danger" @onclick="DeleteFeedback">Delete</button>
+
+                    <button class="btn btn-secondary" @onclick="CloseModal">
+                        Close
+                    </button>
+
+                    <button class="btn btn-danger" @onclick="DeleteFeedback">
+                        Delete
+                    </button>
                 </div>
+
             </div>
         </div>
     </div>
@@ -74,21 +108,35 @@
 
 @code 
 {
-    private List<FeedbackDTO>? feedbacks;
+    private List<FeedbackDTO>? filteredFeedbacks;
     private FeedbackDTO? selectedFeedback;
+
 
     protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            var response = await Http.GetFromJsonAsync<ApiResponse>("api/feedback");
-            feedbacks = response?.Data ?? new List<FeedbackDTO>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching feedbacks: {ex.Message}");
-            feedbacks = new List<FeedbackDTO>();
-        }
+        await LoadAll();
+    }
+
+
+    private async Task LoadAll()
+    {
+        var response = await Http.GetFromJsonAsync<ApiResponse>("api/feedback");
+
+        filteredFeedbacks = response?.Data ?? new List<FeedbackDTO>();
+    }
+
+    private async Task LoadNew()
+    {
+        var response = await Http.GetFromJsonAsync<ApiResponse>("api/feedback/0");
+
+        filteredFeedbacks = response?.Data ?? new List<FeedbackDTO>();
+    }
+
+    private async Task LoadReviewed()
+    {
+        var response = await Http.GetFromJsonAsync<ApiResponse>("api/feedback/1");
+
+        filteredFeedbacks = response?.Data ?? new List<FeedbackDTO>();
     }
 
     private void ShowModal(FeedbackDTO fb)
@@ -105,50 +153,31 @@
     {
         if (selectedFeedback == null) return;
 
-        try
+        var response = await Http.PutAsJsonAsync($"api/feedback/{selectedFeedback.Id}/1",new { } );
+
+        if (response.IsSuccessStatusCode)
         {
-            var response = await Http.PutAsJsonAsync($"api/feedback/{selectedFeedback.Id}/1", new {}); 
-            if (response.IsSuccessStatusCode)
-            {
-                selectedFeedback.Status = "Reviewed";
-            }
-            else
-            {
-                Console.WriteLine("Failed to update status.");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error updating status: {ex.Message}");
+            selectedFeedback.Status = "Reviewed";
         }
     }
+
+    private async Task DeleteFeedback()
+    {
+        if (selectedFeedback == null) return;
+
+        var response =await Http.DeleteAsync($"api/feedback/{selectedFeedback.Id}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            filteredFeedbacks?.Remove(selectedFeedback);
+            CloseModal();
+        }
+    }
+
 
     private class ApiResponse
     {
         public string? Message { get; set; }
         public List<FeedbackDTO>? Data { get; set; }
-    }
-
-    public async Task DeleteFeedback()
-    {
-        if (selectedFeedback == null) return;
-
-        try
-        {
-            var response = await Http.DeleteAsync($"api/feedback/{selectedFeedback.Id}");
-            if (response.IsSuccessStatusCode)
-            {
-                feedbacks?.Remove(selectedFeedback);
-                CloseModal();
-            }
-            else
-            {
-                Console.WriteLine("Failed to delete feedback.");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error deleting feedback: {ex.Message}");
-        }
     }
 }
