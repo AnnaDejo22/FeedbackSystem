@@ -43,9 +43,13 @@ public class FeedbackService : IFeedbackService
         };
     }
 
-    public async Task<List<FeedbackDTO>> GetAllFeedbacks()
+    public async Task<List<FeedbackDTO>> GetFeedbacks(int? status)
     {
-        var feedbackEntities =  _context.Feedbacks.ToList();
+        List<Feedback> feedbackEntities;
+        if(status==null)
+            feedbackEntities = _context.Feedbacks.ToList();
+        else
+            feedbackEntities= _context.Feedbacks.Where(fb=> (FeedBackStatus)fb.Status==(FeedBackStatus)status).ToList();
 
         return feedbackEntities.Select(feedback => new FeedbackDTO
         {

@@ -17,15 +17,24 @@
         <div class="main-container">
 
             <div class="mb-3">
-                <button class="btn btn-secondary me-2" @onclick="LoadAll">All Feedbacks
+                <button class="btn btn-secondary me-2" @onclick="()=>LoadFeedbacks(null)">All Feedbacks
                 </button>
 
-                <button class="btn btn-primary me-2" @onclick="LoadNew">New Feedbacks
+                <button class="btn btn-primary me-2" @onclick="()=>LoadFeedbacks(0)">New Feedbacks
                 </button>
 
-                <button class="btn btn-success" @onclick="LoadReviewed">Reviewed Feedbacks
+                <button class="btn btn-success" @onclick="()=>LoadFeedbacks(1)">Reviewed Feedbacks
                 </button>
             </div>
+
+            <div>
+                <form class="d-flex" role="search">
+                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search"/>
+                    <button class="btn btn-outline-success" type="submit">Search</button>
+                </form>
+            </div>
+    
+            
 
             <table class="table table-striped">
                 <thead>
@@ -63,11 +72,11 @@
             <nav aria-label="Page navigation">
                 <ul class="pagination justify-content-center">
                     <li class="page-item @(size == 0 ? "disabled" : "")">
-                        <a class="page-link" href="#" @onclick="BackwardPaging">Previous</a>
+                        <a class="page-link" @onclick="BackwardPaging">Previous</a>
                     </li>
 
                     <li class="page-item @((size + PageSize) >= filteredFeedbacks.Count ? "disabled" : "")">
-                        <a class="page-link" href="#" @onclick="ForwardPaging"> Next </a>
+                        <a class="page-link" @onclick="ForwardPaging"> Next </a>
                     </li>
                 </ul>
             </nav>
@@ -131,18 +140,22 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadAll();
+        await LoadFeedbacks(null);
     }
 
-    private async Task LoadAll()
+    private async Task LoadFeedbacks(int? status)
     {
-        var response = await Http.GetFromJsonAsync<ApiResponse>("api/feedback");
+        ApiResponse? response;
+        if(status==null)
+            response = await Http.GetFromJsonAsync<ApiResponse>("api/feedback");
+        else    
+            response = await Http.GetFromJsonAsync<ApiResponse>($"api/feedback/{status}");
         filteredFeedbacks = response?.Data ?? new List<FeedbackDTO>();
         size = 0;
         ApplyPaging();
     }
 
-    private async Task LoadNew()
+    @* private async Task LoadNew()
     {
         var response = await Http.GetFromJsonAsync<ApiResponse>("api/feedback/0");
         filteredFeedbacks = response?.Data ?? new List<FeedbackDTO>();
@@ -156,7 +169,7 @@
         filteredFeedbacks = response?.Data ?? new List<FeedbackDTO>();
         size = 0;
         ApplyPaging();
-    }
+    } *@
 
     private void ApplyPaging()
     {

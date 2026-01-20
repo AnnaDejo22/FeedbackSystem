@@ -40,11 +40,11 @@ public class FeedbackController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetFeedbacks()
+    public async Task<IActionResult> GetFeedbacks([FromBody]int? status=null)
     {
         try
         {
-            var feedbacks = await _feedbackService.GetAllFeedbacks();
+            var feedbacks = await _feedbackService.GetFeedbacks(status);
             return Ok(new
             {
                 message = "Feedbacks retrieved successfully",

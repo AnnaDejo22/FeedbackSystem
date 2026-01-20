@@ -6,7 +6,7 @@ namespace FeedbackSystem.API.Services.Interfaces;
 public interface IFeedbackService
 {
     Task<FeedbackDTO> SubmitFeedbackAsync(FeedbackDTO feedbackDto);
-    Task<List<FeedbackDTO>> GetAllFeedbacks();
+    Task<List<FeedbackDTO>> GetFeedbacks(int? status);
     Task<FeedbackDTO> UpdateFeedbackStatusAsync(int id, FeedBackStatus status);
     Task<bool> DeleteFeedbackAsync(int id);
     Task<List<FeedbackDTO>> SortFeedbacksByStatusAsync(FeedBackStatus status);
